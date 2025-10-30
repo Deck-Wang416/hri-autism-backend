@@ -1,5 +1,3 @@
-"""Pydantic models for children API payloads."""
-
 from __future__ import annotations
 
 from datetime import datetime
@@ -7,7 +5,7 @@ from enum import Enum
 from typing import List
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 KEYWORD_MIN = 3
 KEYWORD_MAX = 7
@@ -64,7 +62,8 @@ class ChildCreateResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    @validator("triggers", "interests", "target_skills")
+    @field_validator("triggers", "interests", "target_skills")
+    @classmethod
     def validate_keywords(cls, value: str) -> str:
         return _normalize_keywords(value)
 
@@ -86,6 +85,7 @@ class ChildDetail(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    @validator("triggers", "interests", "target_skills")
+    @field_validator("triggers", "interests", "target_skills")
+    @classmethod
     def validate_keywords(cls, value: str) -> str:
         return _normalize_keywords(value)

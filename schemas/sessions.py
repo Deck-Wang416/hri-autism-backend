@@ -1,5 +1,3 @@
-"""Pydantic models for sessions API payloads."""
-
 from __future__ import annotations
 
 from datetime import datetime
@@ -7,7 +5,7 @@ from enum import Enum
 from typing import List
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class SessionMood(str, Enum):
@@ -52,7 +50,8 @@ class SessionCreate(BaseModel):
     environment: str
     situation: str = Field(..., min_length=1, max_length=800)
 
-    @validator("environment")
+    @field_validator("environment")
+    @classmethod
     def validate_environment(cls, value: str) -> str:
         return _normalize_environment(value)
 
@@ -76,6 +75,7 @@ class SessionDetail(BaseModel):
     prompt: str
     created_at: datetime
 
-    @validator("environment")
+    @field_validator("environment")
+    @classmethod
     def validate_environment(cls, value: str) -> str:
         return _normalize_environment(value)
