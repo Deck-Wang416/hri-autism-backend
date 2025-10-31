@@ -11,10 +11,10 @@ try:
     import gspread
     from gspread import Spreadsheet, Worksheet
     from gspread.exceptions import APIError, WorksheetNotFound
-except ImportError as exc:  # pragma: no cover - executed only when dependency missing
-    gspread = None  # type: ignore
-    Spreadsheet = Worksheet = Any  # type: ignore
-    WorksheetNotFound = APIError = Exception  # type: ignore
+except ImportError as exc:
+    gspread = None
+    Spreadsheet = Worksheet = Any
+    WorksheetNotFound = APIError = Exception
     _IMPORT_ERROR = exc
 else:
     _IMPORT_ERROR = None
@@ -59,7 +59,7 @@ class SheetNames:
 
 def create_client(credentials_path: Path) -> "gspread.Client":
     """Create a gspread client using a service account JSON key file."""
-    if gspread is None:  # pragma: no cover
+    if gspread is None:
         raise ImportError(
             "gspread is required to use SheetsRepository. "
             "Install it via `pip install gspread`."
@@ -84,7 +84,7 @@ class SheetsRepository:
         self._client = client
         try:
             self._spreadsheet: Spreadsheet = client.open_by_key(spreadsheet_id)
-        except APIError as exc:  # pragma: no cover - network call
+        except APIError as exc:
             raise SheetsRepositoryError(
                 f"Failed to open spreadsheet with id '{spreadsheet_id}'."
             ) from exc
@@ -183,7 +183,7 @@ class SheetsRepository:
 
     @staticmethod
     def _find_row_by_id(worksheet: Worksheet, identifier: str) -> Optional[int]:
-        """Locate the row index for a given record ID (assumes ID is in first column)."""
+        """Locate the row index for a given record ID."""
         column_values = worksheet.col_values(1)
         for idx, value in enumerate(column_values, start=1):
             if value == identifier:
