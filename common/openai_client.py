@@ -78,15 +78,19 @@ class OpenAIClient:
         if not completion.output:
             raise ExternalServiceError("OpenAI keyword response had no output.")
 
-        # Extract all text segments from the response
-        text_parts = [
-            block.text.value
-            for block in completion.output
-            if getattr(block, "type", "") == "output_text" and getattr(block, "text", None)
-        ]
+        text_parts = []
+        for block in completion.output:
+            if getattr(block, "type", "") != "message":
+                continue
+
+            for item in getattr(block, "content", []):
+                if getattr(item, "type", "") == "output_text":
+                    text = getattr(item, "text", "")
+                    if isinstance(text, str) and text:
+                        text_parts.append(text)
 
         if not text_parts:
-            raise ExternalServiceError("OpenAI keyword response contained no text blocks.")
+            raise ExternalServiceError("OpenAI keyword response contained no usable text.")
 
         return "".join(text_parts).strip()
 
