@@ -2,15 +2,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from api.dependencies import get_children_service
 from common.errors import BaseAppError, to_http_exception
 from schemas.children import ChildCreate, ChildCreateResponse, ChildDetail
 from services.children_service import ChildrenService
 
 router = APIRouter(prefix="/api/children", tags=["children"])
-
-
-def get_children_service() -> ChildrenService:
-    raise NotImplementedError
 
 
 @router.post(

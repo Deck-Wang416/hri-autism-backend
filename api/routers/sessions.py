@@ -2,15 +2,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from api.dependencies import get_sessions_service
 from common.errors import BaseAppError, to_http_exception
 from schemas.sessions import SessionCreate, SessionCreateResponse, SessionDetail
 from services.sessions_service import SessionsService
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
-
-
-def get_sessions_service() -> SessionsService:
-    raise NotImplementedError
 
 
 @router.post(
