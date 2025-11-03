@@ -7,7 +7,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
-KEYWORD_MIN = 3
+KEYWORD_MIN = 1
 KEYWORD_MAX = 7
 
 

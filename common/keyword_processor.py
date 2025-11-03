@@ -6,7 +6,7 @@ from typing import Awaitable, Callable, Iterable, List
 from common.errors import ValidationError
 
 KEYWORD_DELIMITER = ","
-KEYWORD_MIN = 3
+KEYWORD_MIN = 1
 KEYWORD_MAX = 7
 
 
@@ -75,8 +75,9 @@ class KeywordProcessor:
         """Craft the instruction prompt for the LLM."""
         instructions = (
             "You are an assistant that extracts concise, lowercase keywords from parental notes.\n"
-            "Return between 3 and 7 keywords separated by commas. Replace spaces with underscores.\n"
+            "Return between 1 and 7 keywords separated by commas. Replace spaces with underscores.\n"
             f"Label: {request.label}\n"
+            "The value after “Label:” only tells you the keyword category, do not include the label itself or any prefix in the output.\n"
             "Input text:\n"
             f"{request.raw_text.strip()}"
         )
