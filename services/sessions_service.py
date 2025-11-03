@@ -22,10 +22,9 @@ class SessionsService:
     """Coordinates prompt generation and persistence for session records."""
 
     SESSION_SYSTEM_PROMPT = (
-        "You are a compassionate social companion robot supporting autistic children. "
-        "Use gentle, clear language, short sentences, and encouraging tone. "
-        "Reference the provided child profile and today's context to tailor your response. "
-        "Offer concrete interaction ideas for the next few minutes."
+        "You are drafting a system-level instruction for a social companion robot that supports autistic children."
+        "The output must describe the robot's role, tone, behavioral guidelines, and concrete interaction strategies based on the provided Child profile and Today's context."
+        "Do not speak directly to the child. Produce a single cohesive system prompt for the robot to follow."
     )
 
     def __init__(self, repository: SheetsRepository, openai_client: OpenAIClient) -> None:
