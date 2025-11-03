@@ -1,6 +1,6 @@
 # HRI Autism Backend
 
-This service integrates each child’s long-term profile with daily session inputs from parents or therapists, using the OpenAI GPT API to extract normalized keywords and generate a session-specific system prompt for a social companion robot that supports children on the autism spectrum. All structured data and prompts are stored in Google Sheets for downstream use in the robot’s interaction workflow.
+Built with FastAPI, this service integrates each child’s long-term profile with daily session inputs from parents or therapists, using the OpenAI API to extract normalized keywords and generate a session-specific system prompt for a social companion robot that supports children on the autism spectrum. All structured data and prompts are stored in Google Sheets for downstream use in the robot’s interaction workflow.
 
 ## Prerequisites
 
