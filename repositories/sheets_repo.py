@@ -50,11 +50,30 @@ SESSIONS_HEADERS: List[str] = [
     "created_at",
 ]
 
+USERS_HEADERS: List[str] = [
+    "user_id",
+    "email",
+    "password_hash",
+    "full_name",
+    "role",
+    "created_at",
+    "updated_at",
+    "last_login_at",
+]
+
+USER_CHILDREN_HEADERS: List[str] = [
+    "user_id",
+    "child_id",
+    "created_at",
+]
+
 
 @dataclass(frozen=True)
 class SheetNames:
     children: str = "children"
     sessions: str = "sessions"
+    users: str = "users"
+    user_children: str = "user_children"
 
 
 def create_client(credentials_path: Path) -> "gspread.Client":
@@ -102,6 +121,20 @@ class SheetsRepository:
         except WorksheetNotFound as exc:
             raise SheetsRepositoryError(
                 f"Worksheet '{names.sessions}' not found in spreadsheet."
+            ) from exc
+
+        try:
+            self._users_ws: Worksheet = self._spreadsheet.worksheet(names.users)
+        except WorksheetNotFound as exc:
+            raise SheetsRepositoryError(
+                f"Worksheet '{names.users}' not found in spreadsheet."
+            ) from exc
+
+        try:
+            self._user_children_ws: Worksheet = self._spreadsheet.worksheet(names.user_children)
+        except WorksheetNotFound as exc:
+            raise SheetsRepositoryError(
+                f"Worksheet '{names.user_children}' not found in spreadsheet."
             ) from exc
 
     # --------------------------------------------------------------------- #
@@ -160,6 +193,58 @@ class SheetsRepository:
         return self._deserialize_row(SESSIONS_HEADERS, values)
 
     # --------------------------------------------------------------------- #
+    # User operations                                                      #
+    # --------------------------------------------------------------------- #
+
+    def create_user(self, record: Dict[str, Any]) -> None:
+        row = self._serialize_row(USERS_HEADERS, record)
+        self._users_ws.append_row(row, value_input_option="USER_ENTERED")
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        row_index = self._find_row_by_column(self._users_ws, column_index=2, value=email)
+        if row_index is None:
+            return None
+        values = self._users_ws.row_values(row_index)
+        return self._deserialize_row(USERS_HEADERS, values)
+
+    def link_user_child(self, record: Dict[str, Any]) -> None:
+        row = self._serialize_row(USER_CHILDREN_HEADERS, record)
+        self._user_children_ws.append_row(row, value_input_option="USER_ENTERED")
+
+    def list_children_for_user(self, user_id: str) -> List[Dict[str, Any]]:
+        mappings = self._user_children_ws.get_all_records()
+        child_ids = [
+            entry["child_id"]
+            for entry in mappings
+            if entry.get("user_id") == user_id
+        ]
+        results: List[Dict[str, Any]] = []
+        for child_id in child_ids:
+            row_index = self._find_row_by_id(self._children_ws, child_id)
+            if row_index is None:
+                continue
+            values = self._children_ws.row_values(row_index)
+            results.append(self._deserialize_row(CHILDREN_HEADERS, values))
+        return results
+
+    def get_latest_session_for_child(self, child_id: str) -> Optional[Dict[str, Any]]:
+        all_rows = self._sessions_ws.get_all_records()
+        latest_row: Optional[Dict[str, Any]] = None
+        latest_created: Optional[str] = None
+
+        for row in all_rows:
+            if row.get("child_id") != child_id:
+                continue
+            created_at = row.get("created_at")
+            if not created_at:
+                continue
+            if latest_created is None or created_at > latest_created:
+                latest_created = created_at
+                latest_row = row
+
+        return latest_row
+
+    # --------------------------------------------------------------------- #
     # Helpers                                                               #
     # --------------------------------------------------------------------- #
 
@@ -187,6 +272,17 @@ class SheetsRepository:
         column_values = worksheet.col_values(1)
         for idx, value in enumerate(column_values, start=1):
             if value == identifier:
+                return idx
+        return None
+
+    @staticmethod
+    def _find_row_by_column(
+        worksheet: Worksheet, *, column_index: int, value: str
+    ) -> Optional[int]:
+        """Locate the row index where a column matches the provided value."""
+        column_values = worksheet.col_values(column_index)
+        for idx, cell_value in enumerate(column_values, start=1):
+            if cell_value == value:
                 return idx
         return None
 
