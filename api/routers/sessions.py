@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from api.dependencies import get_sessions_service
+from api.dependencies import get_sessions_service, get_current_user
 from common.errors import BaseAppError, to_http_exception
+from schemas.auth import UserOut
 from schemas.sessions import SessionCreate, SessionCreateResponse, SessionDetail
 from services.sessions_service import SessionsService
 
@@ -17,10 +18,11 @@ router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 )
 async def create_session(
     payload: SessionCreate,
+    current_user: UserOut = Depends(get_current_user),
     service: SessionsService = Depends(get_sessions_service),
 ) -> SessionCreateResponse:
     try:
-        return await service.create_session(payload)
+        return await service.create_session(payload, current_user.user_id)
     except BaseAppError as exc:
         raise to_http_exception(exc)
 

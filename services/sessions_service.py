@@ -33,8 +33,18 @@ class SessionsService:
         self._repository = repository
         self._openai = openai_client
 
-    async def create_session(self, payload: SessionCreate) -> SessionCreateResponse:
+    async def create_session(
+        self,
+        payload: SessionCreate,
+        user_id: UUID,
+    ) -> SessionCreateResponse:
         """Create a new session, generate prompt, and persist the record."""
+        owns = await asyncio.to_thread(
+            self._repository.user_owns_child, str(user_id), str(payload.child_id)
+        )
+        if not owns:
+            raise NotFoundError("Child not found for current user.")
+
         child_record = await asyncio.to_thread(
             self._repository.get_child, str(payload.child_id)
         )

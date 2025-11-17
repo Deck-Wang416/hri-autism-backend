@@ -27,10 +27,11 @@ router = APIRouter(prefix="/api/children", tags=["children"])
 )
 async def create_child_profile(
     payload: ChildCreate,
+    current_user: UserOut = Depends(get_current_user),
     service: ChildrenService = Depends(get_children_service),
 ) -> ChildCreateResponse:
     try:
-        return await service.create_child(payload)
+        return await service.create_child(payload, current_user.user_id)
     except BaseAppError as exc:
         raise to_http_exception(exc)
 
@@ -52,10 +53,11 @@ async def list_children(
 )
 async def get_child_profile(
     child_id: UUID,
+    current_user: UserOut = Depends(get_current_user),
     service: ChildrenService = Depends(get_children_service),
 ) -> ChildDetail:
     try:
-        return await service.get_child(child_id)
+        return await service.get_child(child_id, current_user.user_id)
     except BaseAppError as exc:
         raise to_http_exception(exc)
 

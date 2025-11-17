@@ -26,7 +26,7 @@ class ChildrenService:
         self._repository = repository
         self._openai = openai_client
 
-    async def create_child(self, payload: ChildCreate) -> ChildCreateResponse:
+    async def create_child(self, payload: ChildCreate, user_id: UUID) -> ChildCreateResponse:
         """Create a new child profile and persist it to Google Sheets."""
         child_uuid = uuid4()
         now = utc_now()
@@ -57,6 +57,14 @@ class ChildrenService:
 
         # offload synchronous Sheets write to a thread to avoid blocking
         await asyncio.to_thread(self._repository.create_child, record)
+        await asyncio.to_thread(
+            self._repository.link_user_child,
+            {
+                "user_id": str(user_id),
+                "child_id": str(child_uuid),
+                "created_at": iso_now,
+            },
+        )
 
         return ChildCreateResponse(
             child_id=child_uuid,
@@ -69,8 +77,15 @@ class ChildrenService:
             updated_at=now,
         )
 
-    async def get_child(self, child_id: UUID) -> ChildDetail:
+    async def get_child(self, child_id: UUID, user_id: UUID | None = None) -> ChildDetail:
         """Retrieve a stored child profile."""
+        if user_id is not None:
+            owns = await asyncio.to_thread(
+                self._repository.user_owns_child, str(user_id), str(child_id)
+            )
+            if not owns:
+                raise NotFoundError("Child not found for current user.")
+
         record = await asyncio.to_thread(self._repository.get_child, str(child_id))
 
         # Convert ISO-8601 string into datetime

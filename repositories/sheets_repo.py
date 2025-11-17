@@ -188,7 +188,6 @@ class SheetsRepository:
             raise NotFoundError(
                 f"Session '{session_id}' not found.", details={"session_id": session_id}
             )
-
         values = self._sessions_ws.row_values(row_index)
         return self._deserialize_row(SESSIONS_HEADERS, values)
 
