@@ -6,6 +6,7 @@ Built with FastAPI, this service integrates each child’s long-term profile wit
 
 - Google service account credentials with edit access to the target spreadsheet.
 - OpenAI API key with access to `gpt-4o-mini` (keywords) and `gpt-4o` (prompts).
+- JWT symmetric secret for signing authentication tokens.
 
 ## API Surface
 

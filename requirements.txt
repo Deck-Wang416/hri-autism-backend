@@ -7,3 +7,4 @@ openai==1.51.2
 gspread==6.1.4
 google-auth==2.35.0
 google-auth-oauthlib==1.2.1
+PyJWT==2.9.0

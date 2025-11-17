@@ -23,10 +23,20 @@ class OpenAISettings:
 
 
 @dataclass(frozen=True)
+class JWTSettings:
+    secret_key: str
+    algorithm: str
+    issuer: Optional[str]
+    audience: Optional[str]
+    access_token_minutes: int
+
+
+@dataclass(frozen=True)
 class Settings:
     environment: str
     google_sheets: GoogleSheetsSettings
     openai: OpenAISettings
+    jwt: JWTSettings
 
 
 def _read_required_path(env_name: str) -> Path:
@@ -46,6 +56,23 @@ def _read_optional(env_name: str) -> Optional[str]:
     return value.strip() if value and value.strip() else None
 
 
+def _read_required(env_name: str) -> str:
+    value = _read_optional(env_name)
+    if not value:
+        raise ConfigError(f"Missing required environment variable: {env_name}")
+    return value
+
+
+def _read_int(env_name: str, default: int) -> int:
+    raw = _read_optional(env_name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError as exc:
+        raise ConfigError(f"{env_name} must be an integer.") from exc
+
+
 @lru_cache()
 def get_settings() -> Settings:
     """Load application settings from environment variables."""
@@ -58,4 +85,11 @@ def get_settings() -> Settings:
             spreadsheet_id=_read_optional("GOOGLE_SHEETS_SPREADSHEET_ID"),
         ),
         openai=OpenAISettings(api_key=_read_optional("OPENAI_API_KEY")),
+        jwt=JWTSettings(
+            secret_key=_read_required("JWT_SECRET_KEY"),
+            algorithm=_read_optional("JWT_ALGORITHM") or "HS256",
+            issuer=_read_optional("JWT_ISSUER"),
+            audience=_read_optional("JWT_AUDIENCE"),
+            access_token_minutes=_read_int("JWT_ACCESS_TOKEN_MINUTES", 60),
+        ),
     )
