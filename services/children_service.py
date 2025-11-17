@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Dict, Sequence
+from typing import Dict, List, Sequence
 from uuid import UUID, uuid4
 
 from common.keyword_processor import KeywordRequest
@@ -12,6 +12,8 @@ from schemas.children import (
     ChildCreate,
     ChildCreateResponse,
     ChildDetail,
+    ChildSummary,
+    ChildrenListResponse,
     CommunicationLevel,
     PersonalityType,
 )
@@ -90,3 +92,25 @@ class ChildrenService:
             created_at=created_at,
             updated_at=updated_at,
         )
+
+    async def list_children_for_user(self, user_id: UUID) -> ChildrenListResponse:
+        records: List[Dict[str, Any]] = await asyncio.to_thread(
+            self._repository.list_children_for_user, str(user_id)
+        )
+        summaries: List[ChildSummary] = []
+        for record in records:
+            summaries.append(
+                ChildSummary(
+                    child_id=UUID(record["child_id"]),
+                    nickname=record["nickname"],
+                    age=int(record["age"]) if isinstance(record["age"], str) else record["age"],
+                    comm_level=CommunicationLevel(record["comm_level"]),
+                    personality=PersonalityType(record["personality"]),
+                    triggers=record["triggers"],
+                    interests=record["interests"],
+                    target_skills=record["target_skills"],
+                    created_at=from_isoformat(record["created_at"]),
+                    updated_at=from_isoformat(record["updated_at"]),
+                )
+            )
+        return ChildrenListResponse(children=summaries)

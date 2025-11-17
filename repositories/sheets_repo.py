@@ -234,6 +234,13 @@ class SheetsRepository:
             results.append(self._deserialize_row(CHILDREN_HEADERS, values))
         return results
 
+    def user_owns_child(self, user_id: str, child_id: str) -> bool:
+        mappings = self._user_children_ws.get_all_records()
+        return any(
+            entry.get("user_id") == user_id and entry.get("child_id") == child_id
+            for entry in mappings
+        )
+
     def update_user(self, user_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
         row_index = self._find_row_by_id(self._users_ws, user_id)
         if row_index is None:

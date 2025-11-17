@@ -7,10 +7,12 @@ from typing import Iterable, List
 from uuid import UUID, uuid4
 
 from common.openai_client import OpenAIClient
+from common.errors import NotFoundError
 from common.time_utils import from_isoformat, to_isoformat, utc_now
 from repositories.sheets_repo import SheetsRepository
 from schemas.children import ChildDetail, CommunicationLevel, PersonalityType
 from schemas.sessions import (
+    LatestSessionResponse,
     SessionCreate,
     SessionCreateResponse,
     SessionDetail,
@@ -126,3 +128,26 @@ class SessionsService:
             {"role": "user", "content": session_text},
         ]
         return messages
+
+    async def get_latest_session(self, user_id: UUID, child_id: UUID) -> LatestSessionResponse | None:
+        owns = await asyncio.to_thread(
+            self._repository.user_owns_child, str(user_id), str(child_id)
+        )
+        if not owns:
+            raise NotFoundError("Child not found for current user.")
+
+        record = await asyncio.to_thread(
+            self._repository.get_latest_session_for_child, str(child_id)
+        )
+        if record is None:
+            return None
+
+        return LatestSessionResponse(
+            session_id=UUID(record["session_id"]),
+            child_id=UUID(record["child_id"]),
+            mood=SessionMood(record["mood"]),
+            environment=record["environment"],
+            situation=record["situation"],
+            prompt=record["prompt"],
+            created_at=from_isoformat(record["created_at"]),
+        )
