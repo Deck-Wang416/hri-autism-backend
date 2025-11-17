@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from passlib.context import CryptContext
+import bcrypt
+
+if not hasattr(bcrypt, "__about__"):
+    bcrypt.__about__ = SimpleNamespace(__version__=bcrypt.__version__)
 
 from common.errors import ValidationError
 

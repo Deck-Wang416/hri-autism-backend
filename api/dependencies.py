@@ -5,6 +5,7 @@ from functools import lru_cache
 from common.config import ConfigError, get_settings
 from common.openai_client import OpenAIClient, OpenAIClientConfig
 from repositories.sheets_repo import SheetsRepository, create_client
+from services.auth_service import AuthService
 from services.children_service import ChildrenService
 from services.sessions_service import SessionsService
 
@@ -42,3 +43,7 @@ def get_sessions_service() -> SessionsService:
         repository=_build_sheets_repository(),
         openai_client=_build_openai_client(),
     )
+
+
+def get_auth_service() -> AuthService:
+    return AuthService(repository=_build_sheets_repository())

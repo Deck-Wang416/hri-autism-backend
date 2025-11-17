@@ -227,6 +227,20 @@ class SheetsRepository:
             results.append(self._deserialize_row(CHILDREN_HEADERS, values))
         return results
 
+    def update_user(self, user_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        row_index = self._find_row_by_id(self._users_ws, user_id)
+        if row_index is None:
+            raise NotFoundError(f"User '{user_id}' not found.", details={"user_id": user_id})
+
+        current_values = self._users_ws.row_values(row_index)
+        current_record = self._deserialize_row(USERS_HEADERS, current_values)
+        current_record.update(updates)
+        new_row = self._serialize_row(USERS_HEADERS, current_record)
+
+        cell_range = f"A{row_index}:{self._column_letter(len(USERS_HEADERS))}{row_index}"
+        self._users_ws.update(cell_range, [new_row])
+        return current_record
+
     def get_latest_session_for_child(self, child_id: str) -> Optional[Dict[str, Any]]:
         all_rows = self._sessions_ws.get_all_records()
         latest_row: Optional[Dict[str, Any]] = None
