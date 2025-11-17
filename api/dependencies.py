@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from uuid import UUID
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 
 from common.config import ConfigError, get_settings
+from common.errors import ValidationError
+from common.jwt_utils import decode_access_token
 from common.openai_client import OpenAIClient, OpenAIClientConfig
+from common.time_utils import from_isoformat
 from repositories.sheets_repo import SheetsRepository, create_client
+from schemas.auth import UserOut, UserRole
 from services.auth_service import AuthService
 from services.children_service import ChildrenService
 from services.sessions_service import SessionsService
@@ -45,5 +53,39 @@ def get_sessions_service() -> SessionsService:
     )
 
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+
 def get_auth_service() -> AuthService:
     return AuthService(repository=_build_sheets_repository())
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> UserOut:
+    try:
+        payload = decode_access_token(token)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "unauthorized", "message": "Invalid authentication token."},
+        ) from exc
+
+    repository = _build_sheets_repository()
+    user_uuid = UUID(payload.sub)
+    record = repository.get_user_by_id(str(user_uuid))
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "unauthorized", "message": "User not found."},
+        )
+
+    return UserOut(
+        user_id=user_uuid,
+        email=record["email"],
+        full_name=record["full_name"],
+        role=UserRole(record["role"]),
+        created_at=from_isoformat(record["created_at"]),
+        updated_at=from_isoformat(record["updated_at"]),
+        last_login_at=from_isoformat(record["last_login_at"])
+        if record.get("last_login_at")
+        else None,
+    )

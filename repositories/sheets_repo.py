@@ -207,6 +207,13 @@ class SheetsRepository:
         values = self._users_ws.row_values(row_index)
         return self._deserialize_row(USERS_HEADERS, values)
 
+    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        row_index = self._find_row_by_id(self._users_ws, user_id)
+        if row_index is None:
+            return None
+        values = self._users_ws.row_values(row_index)
+        return self._deserialize_row(USERS_HEADERS, values)
+
     def link_user_child(self, record: Dict[str, Any]) -> None:
         row = self._serialize_row(USER_CHILDREN_HEADERS, record)
         self._user_children_ws.append_row(row, value_input_option="USER_ENTERED")
