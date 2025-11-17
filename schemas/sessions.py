@@ -79,3 +79,13 @@ class SessionDetail(BaseModel):
     @classmethod
     def validate_environment(cls, value: str) -> str:
         return _normalize_environment(value)
+
+
+class LatestSessionResponse(BaseModel):
+    session_id: UUID
+    child_id: UUID
+    mood: SessionMood
+    environment: str
+    situation: str
+    prompt: str
+    created_at: datetime

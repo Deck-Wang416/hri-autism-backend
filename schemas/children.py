@@ -89,3 +89,20 @@ class ChildDetail(BaseModel):
     @classmethod
     def validate_keywords(cls, value: str) -> str:
         return _normalize_keywords(value)
+
+
+class ChildSummary(BaseModel):
+    child_id: UUID
+    nickname: str
+    age: int
+    comm_level: CommunicationLevel
+    personality: PersonalityType
+    triggers: str
+    interests: str
+    target_skills: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChildrenListResponse(BaseModel):
+    children: List[ChildSummary]
