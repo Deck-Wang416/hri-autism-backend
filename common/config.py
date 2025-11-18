@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -73,10 +74,26 @@ def _read_int(env_name: str, default: int) -> int:
         raise ConfigError(f"{env_name} must be an integer.") from exc
 
 
+def _resolve_google_credentials_path() -> Path:
+    """
+    Render deployments provide the service account JSON via an env var.
+    Write it to a temp file so gspread can load it; otherwise fall back
+    to the legacy GOOGLE_SHEETS_CREDENTIALS_PATH.
+    """
+    credentials_json = _read_optional("GOOGLE_SHEETS_CREDENTIALS_JSON")
+    if credentials_json:
+        tmp_dir = Path(tempfile.gettempdir())
+        tmp_path = tmp_dir / "google_sheets_credentials.json"
+        tmp_path.write_text(credentials_json)
+        return tmp_path
+
+    return _read_required_path("GOOGLE_SHEETS_CREDENTIALS_PATH")
+
+
 @lru_cache()
 def get_settings() -> Settings:
     """Load application settings from environment variables."""
-    credentials_path = _read_required_path("GOOGLE_SHEETS_CREDENTIALS_PATH")
+    credentials_path = _resolve_google_credentials_path()
 
     return Settings(
         environment=_read_optional("APP_ENV") or "development",
